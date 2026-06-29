@@ -16,5 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Independent per-location toggles (single, archives, cart, checkout).
 - Per-line toggles and custom labels for the incl. VAT and excl. VAT lines.
 - Live per-variation price updates on the single product page for variable products; price range on archives.
+- Minimum WooCommerce version check (7.0) — shows an admin notice and stays inactive on older versions.
 - English (default) and Greek (`el`) translations.
 - Declared compatible with WooCommerce HPOS.

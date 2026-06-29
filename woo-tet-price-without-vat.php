@@ -20,6 +20,7 @@
 defined( 'ABSPATH' ) || exit;
 
 define( 'TTRP_PWV_VERSION', get_file_data( __FILE__, array( 'Version' => 'Version' ) )['Version'] );
+define( 'TTRP_PWV_MIN_WC', '7.0' );
 
 add_action( 'before_woocommerce_init', function () {
 	if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
@@ -31,6 +32,12 @@ add_action( 'init', 'ttrp_pwv_init' );
 
 function ttrp_pwv_init() {
 	if ( ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
+
+	// Require a minimum WooCommerce version — show a notice and bail otherwise.
+	if ( defined( 'WC_VERSION' ) && version_compare( WC_VERSION, TTRP_PWV_MIN_WC, '<' ) ) {
+		add_action( 'admin_notices', 'ttrp_pwv_wc_version_notice' );
 		return;
 	}
 
@@ -64,6 +71,22 @@ function ttrp_pwv_init() {
 	// Variation support on the single product page.
 	add_filter( 'woocommerce_available_variation', 'ttrp_pwv_available_variation', 10, 3 );
 	add_action( 'wp_enqueue_scripts', 'ttrp_pwv_enqueue_front_assets' );
+}
+
+/**
+ * Admin notice shown when the active WooCommerce version is too old.
+ */
+function ttrp_pwv_wc_version_notice() {
+	if ( ! current_user_can( 'activate_plugins' ) ) {
+		return;
+	}
+	$message = sprintf(
+		/* translators: 1: required WooCommerce version, 2: active WooCommerce version. */
+		esc_html__( 'Price With/Without VAT requires WooCommerce %1$s or newer. You are running %2$s. The plugin is inactive until WooCommerce is updated.', 'price-without-vat' ),
+		esc_html( TTRP_PWV_MIN_WC ),
+		esc_html( defined( 'WC_VERSION' ) ? WC_VERSION : '' )
+	);
+	printf( '<div class="notice notice-error"><p>%s</p></div>', $message ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- Message escaped above.
 }
 
 // ---------------------------------------------------------------------------

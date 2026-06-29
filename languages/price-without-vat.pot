@@ -91,3 +91,7 @@ msgstr ""
 
 msgid "Price With/Without VAT by"
 msgstr ""
+
+#. translators: 1: required WooCommerce version, 2: active WooCommerce version.
+msgid "Price With/Without VAT requires WooCommerce %1$s or newer. You are running %2$s. The plugin is inactive until WooCommerce is updated."
+msgstr ""
