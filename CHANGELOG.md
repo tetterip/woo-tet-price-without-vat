@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0] - 2026-06-29
+
+### Added
+- Cart & Checkout **blocks** support via the Store API (`woocommerce_store_api_register_endpoint_data`) plus a no-build JS integration (`assets/pwv-blocks.js`) using WooCommerce's `wc.blocksCheckout` registered filters.
+- Skip display entirely when WooCommerce taxes are disabled.
+
+### Changed
+- Single product and shop/archive prices now render via the `woocommerce_get_price_html` filter instead of classic template actions, so they work with classic themes, block templates, and page builders (Elementor custom single/loop templates) alike.
+- Variations now update natively (each variation's price HTML runs through the same filter) — the custom variation script is no longer needed.
+- Cart & Checkout now show exactly **two prices** (with and without VAT) by replacing the line subtotal, instead of appending two prices after the existing one (which produced three).
+
+### Removed
+- `assets/pwv-variation.js` and the `woocommerce_available_variation` injection (superseded by the price-HTML filter).
+
+---
+
 ## [1.1.0] - 2026-06-29
 
 ### Changed

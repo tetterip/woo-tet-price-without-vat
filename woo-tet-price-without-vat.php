@@ -3,7 +3,7 @@
  * Plugin Name:       Price With and Without VAT for WooCommerce
  * Plugin URI:        https://github.com/tetterip/woo-tet-price-without-vat
  * Description:       Shows product prices with and without VAT on the single product page, shop/category archives, and cart/checkout. Audience can be everyone, logged-in users, or selected roles (e.g. wholesale customers).
- * Version:           1.1.0
+ * Version:           1.2.0
  * Author:            Michalis Tetteris
  * Author URI:        https://ttrp.gr
  * License:           GPL-2.0+
@@ -30,6 +30,10 @@ add_action( 'before_woocommerce_init', function () {
 
 add_action( 'init', 'ttrp_pwv_init' );
 
+// Cart/Checkout blocks render via the Store API, not the classic
+// woocommerce_cart_item_subtotal filter — expose per-line prices there.
+add_action( 'woocommerce_blocks_loaded', 'ttrp_pwv_register_store_api_data' );
+
 function ttrp_pwv_init() {
 	if ( ! class_exists( 'WooCommerce' ) ) {
 		return;
@@ -53,24 +57,24 @@ function ttrp_pwv_init() {
 		return;
 	}
 
-	// Single product page — after the price (priority 10).
-	if ( 'no' !== ttrp_pwv_setting( 'show_single' ) ) {
-		add_action( 'woocommerce_single_product_summary', 'ttrp_pwv_render_single', 11 );
+	// Product price on single + archives. We filter the price HTML rather than
+	// hook classic template actions so it works with classic themes, block
+	// templates, and page builders (Elementor) alike. Variations update natively
+	// because each variation's price_html also runs through this filter.
+	if ( 'no' !== ttrp_pwv_setting( 'show_single' ) || 'no' !== ttrp_pwv_setting( 'show_archive' ) ) {
+		add_filter( 'woocommerce_get_price_html', 'ttrp_pwv_filter_price_html', 99, 2 );
 	}
 
-	// Shop / category archives — after the loop price (priority 10).
-	if ( 'no' !== ttrp_pwv_setting( 'show_archive' ) ) {
-		add_action( 'woocommerce_after_shop_loop_item_title', 'ttrp_pwv_render_archive', 11 );
-	}
-
-	// Cart / checkout — appended to the line item subtotal column.
+	// Cart / checkout (classic + Elementor) — replace the line subtotal with the
+	// with/without VAT prices (exactly two prices, not the original plus two).
 	if ( 'no' !== ttrp_pwv_setting( 'show_cart' ) || 'no' !== ttrp_pwv_setting( 'show_checkout' ) ) {
-		add_filter( 'woocommerce_cart_item_subtotal', 'ttrp_pwv_cart_item_subtotal', 10, 3 );
+		add_filter( 'woocommerce_cart_item_subtotal', 'ttrp_pwv_cart_item_subtotal', 99, 3 );
 	}
 
-	// Variation support on the single product page.
-	add_filter( 'woocommerce_available_variation', 'ttrp_pwv_available_variation', 10, 3 );
 	add_action( 'wp_enqueue_scripts', 'ttrp_pwv_enqueue_front_assets' );
+
+	// Cart/Checkout blocks integration.
+	add_action( 'wp_enqueue_scripts', 'ttrp_pwv_enqueue_block_assets' );
 }
 
 /**
@@ -143,6 +147,11 @@ function ttrp_pwv_user_matches( array $user_roles, array $allowed_roles ) {
  * Whether the dual price should be shown to the current visitor.
  */
 function ttrp_pwv_should_display() {
+	// No VAT distinction to show when taxes are disabled.
+	if ( function_exists( 'wc_tax_enabled' ) && ! wc_tax_enabled() ) {
+		return false;
+	}
+
 	$audience = ttrp_pwv_setting( 'audience' );
 
 	if ( 'everyone' === $audience ) {
@@ -256,23 +265,52 @@ function ttrp_pwv_lines_markup( $incl_html, $excl_html, $context, $show_incl, $s
 }
 
 // ---------------------------------------------------------------------------
-// Render — single / archive
+// Render — single / archive (via the price HTML filter)
 // ---------------------------------------------------------------------------
 
-function ttrp_pwv_render_single() {
-	if ( ! ttrp_pwv_should_display() ) {
-		return;
-	}
-	global $product;
-	echo ttrp_pwv_get_html( $product, 'single' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- Escaped within ttrp_pwv_get_html().
+/**
+ * Whether $product is the product being viewed on a single product page.
+ * Variations resolve to their parent so a selected variation still matches.
+ *
+ * @param WC_Product $product Product or variation.
+ * @return bool
+ */
+function ttrp_pwv_is_main_product( $product ) {
+	$id = $product->get_parent_id() ? $product->get_parent_id() : $product->get_id();
+	return get_queried_object_id() === $id;
 }
 
-function ttrp_pwv_render_archive() {
-	if ( ! ttrp_pwv_should_display() ) {
-		return;
+/**
+ * Append the with/without VAT lines to a product's price HTML.
+ *
+ * Runs for classic themes, block templates (woocommerce/product-price), and
+ * page builders (Elementor) since they all call WC_Product::get_price_html().
+ *
+ * @param string     $price_html Existing price HTML.
+ * @param WC_Product $product    Product (or variation).
+ * @return string
+ */
+function ttrp_pwv_filter_price_html( $price_html, $product ) {
+	if ( is_admin() || ! $product instanceof WC_Product ) {
+		return $price_html;
 	}
-	global $product;
-	echo ttrp_pwv_get_html( $product, 'archive' ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- Escaped within ttrp_pwv_get_html().
+	if ( ! ttrp_pwv_should_display() ) {
+		return $price_html;
+	}
+
+	$context = '';
+	if ( is_product() && 'no' !== ttrp_pwv_setting( 'show_single' ) && ttrp_pwv_is_main_product( $product ) ) {
+		$context = 'single';
+	} elseif ( ( is_shop() || is_product_taxonomy() ) && 'no' !== ttrp_pwv_setting( 'show_archive' ) ) {
+		$context = 'archive';
+	}
+
+	if ( '' === $context ) {
+		return $price_html;
+	}
+
+	$dual = ttrp_pwv_get_html( $product, $context );
+	return '' === $dual ? $price_html : $price_html . $dual;
 }
 
 // ---------------------------------------------------------------------------
@@ -317,43 +355,10 @@ function ttrp_pwv_cart_item_subtotal( $subtotal, $cart_item, $cart_item_key ) {
 	$incl_html = $show_incl ? wc_price( wc_get_price_including_tax( $product, array( 'qty' => $qty ) ) ) : '';
 	$excl_html = $show_excl ? wc_price( wc_get_price_excluding_tax( $product, array( 'qty' => $qty ) ) ) : '';
 
-	$note = ttrp_pwv_lines_markup( $incl_html, $excl_html, 'cart', $show_incl, $show_excl );
-	if ( '' === $note ) {
-		return $subtotal;
-	}
-
-	return $subtotal . $note;
-}
-
-// ---------------------------------------------------------------------------
-// Variation live update
-// ---------------------------------------------------------------------------
-
-/**
- * Inject per-variation dual-price HTML into the variation JS data.
- *
- * @param array                $data      Variation data passed to JS.
- * @param WC_Product_Variable  $product   Parent product.
- * @param WC_Product_Variation $variation Variation.
- * @return array
- */
-function ttrp_pwv_available_variation( $data, $product, $variation ) {
-	if ( ! ttrp_pwv_should_display() || 'no' === ttrp_pwv_setting( 'show_single' ) ) {
-		return $data;
-	}
-	if ( 'taxable' !== $variation->get_tax_status() ) {
-		$data['ttrp_pwv_html'] = '';
-		return $data;
-	}
-
-	$show_incl = 'no' !== ttrp_pwv_setting( 'show_incl' );
-	$show_excl = 'no' !== ttrp_pwv_setting( 'show_excl' );
-
-	$incl_html = $show_incl ? wc_price( wc_get_price_including_tax( $variation ) ) : '';
-	$excl_html = $show_excl ? wc_price( wc_get_price_excluding_tax( $variation ) ) : '';
-
-	$data['ttrp_pwv_html'] = ttrp_pwv_lines_markup( $incl_html, $excl_html, 'single', $show_incl, $show_excl );
-	return $data;
+	// Replace the subtotal with the with/without VAT lines so the customer sees
+	// exactly two prices (with + without), not the original price plus two.
+	$markup = ttrp_pwv_lines_markup( $incl_html, $excl_html, 'cart', $show_incl, $show_excl );
+	return '' === $markup ? $subtotal : $markup;
 }
 
 // ---------------------------------------------------------------------------
@@ -367,16 +372,133 @@ function ttrp_pwv_enqueue_front_assets() {
 		array(),
 		TTRP_PWV_VERSION
 	);
+}
 
-	if ( is_product() && ttrp_pwv_should_display() && 'no' !== ttrp_pwv_setting( 'show_single' ) ) {
-		wp_enqueue_script(
-			'ttrp-pwv-variation',
-			plugin_dir_url( __FILE__ ) . 'assets/pwv-variation.js',
-			array( 'jquery' ),
-			TTRP_PWV_VERSION,
-			true
-		);
+// ---------------------------------------------------------------------------
+// Cart / Checkout blocks (Store API + registered checkout filters)
+// ---------------------------------------------------------------------------
+
+/**
+ * A clean, locale-formatted price string (no HTML) for the Store API / JS.
+ *
+ * @param float $amount Amount to format.
+ * @return string
+ */
+function ttrp_pwv_plain_price( $amount ) {
+	return trim( html_entity_decode( wp_strip_all_tags( wc_price( $amount ) ), ENT_QUOTES, get_bloginfo( 'charset' ) ) );
+}
+
+/**
+ * Register incl/excl VAT prices on each Store API cart line item.
+ */
+function ttrp_pwv_register_store_api_data() {
+	if ( ! function_exists( 'woocommerce_store_api_register_endpoint_data' ) ) {
+		return;
 	}
+	woocommerce_store_api_register_endpoint_data(
+		array(
+			'endpoint'        => 'cart-items',
+			'namespace'       => 'ttrp-price-without-vat',
+			'data_callback'   => 'ttrp_pwv_store_api_item_data',
+			'schema_callback' => 'ttrp_pwv_store_api_item_schema',
+			'schema_type'     => ARRAY_A,
+		)
+	);
+}
+
+/**
+ * Per-line-item data added to the Store API cart-items response.
+ *
+ * @param array $cart_item Cart item array.
+ * @return array{incl:string,excl:string}
+ */
+function ttrp_pwv_store_api_item_data( $cart_item ) {
+	$empty = array(
+		'incl' => '',
+		'excl' => '',
+	);
+
+	if ( ! ttrp_pwv_should_display() ) {
+		return $empty;
+	}
+	if ( 'no' === ttrp_pwv_setting( 'show_cart' ) && 'no' === ttrp_pwv_setting( 'show_checkout' ) ) {
+		return $empty;
+	}
+	if ( empty( $cart_item['data'] ) || ! $cart_item['data'] instanceof WC_Product ) {
+		return $empty;
+	}
+
+	$product = $cart_item['data'];
+	if ( 'taxable' !== $product->get_tax_status() ) {
+		return $empty;
+	}
+
+	$qty       = isset( $cart_item['quantity'] ) ? (int) $cart_item['quantity'] : 1;
+	$show_incl = 'no' !== ttrp_pwv_setting( 'show_incl' );
+	$show_excl = 'no' !== ttrp_pwv_setting( 'show_excl' );
+
+	return array(
+		'incl' => $show_incl ? ttrp_pwv_plain_price( wc_get_price_including_tax( $product, array( 'qty' => $qty ) ) ) : '',
+		'excl' => $show_excl ? ttrp_pwv_plain_price( wc_get_price_excluding_tax( $product, array( 'qty' => $qty ) ) ) : '',
+	);
+}
+
+/**
+ * Schema for the Store API cart-item data.
+ */
+function ttrp_pwv_store_api_item_schema() {
+	return array(
+		'incl' => array(
+			'description' => __( 'Line subtotal including VAT, formatted.', 'price-without-vat' ),
+			'type'        => array( 'string', 'null' ),
+			'readonly'    => true,
+		),
+		'excl' => array(
+			'description' => __( 'Line subtotal excluding VAT, formatted.', 'price-without-vat' ),
+			'type'        => array( 'string', 'null' ),
+			'readonly'    => true,
+		),
+	);
+}
+
+/**
+ * Enqueue the block integration script on cart/checkout pages.
+ */
+function ttrp_pwv_enqueue_block_assets() {
+	if ( ! is_cart() && ! is_checkout() ) {
+		return;
+	}
+	if ( 'no' === ttrp_pwv_setting( 'show_cart' ) && 'no' === ttrp_pwv_setting( 'show_checkout' ) ) {
+		return;
+	}
+	if ( ! ttrp_pwv_should_display() ) {
+		return;
+	}
+	if ( ! wp_script_is( 'wc-blocks-checkout', 'registered' ) ) {
+		return; // Classic cart/checkout — the woocommerce_cart_item_subtotal filter handles it.
+	}
+
+	wp_enqueue_script(
+		'ttrp-pwv-blocks',
+		plugin_dir_url( __FILE__ ) . 'assets/pwv-blocks.js',
+		array( 'wc-blocks-checkout' ),
+		TTRP_PWV_VERSION,
+		true
+	);
+	wp_localize_script(
+		'ttrp-pwv-blocks',
+		'ttrpPwvBlocks',
+		array(
+			'showCart'     => 'no' !== ttrp_pwv_setting( 'show_cart' ),
+			'showCheckout' => 'no' !== ttrp_pwv_setting( 'show_checkout' ),
+			'showIncl'     => 'no' !== ttrp_pwv_setting( 'show_incl' ),
+			'showExcl'     => 'no' !== ttrp_pwv_setting( 'show_excl' ),
+			'labelIncl'    => ttrp_pwv_setting( 'label_incl' ),
+			'labelExcl'    => ttrp_pwv_setting( 'label_excl' ),
+			// 'incl' or 'excl' — what the block's displayed subtotal already represents.
+			'displayMode'  => 'excl' === get_option( 'woocommerce_tax_display_cart' ) ? 'excl' : 'incl',
+		)
+	);
 }
 
 // ---------------------------------------------------------------------------

@@ -16,7 +16,8 @@ woo-tet-price-without-vat/
 ├── update-checker.php              # TTRP_Update_Checker (checks plugins.ttrp.gr)
 ├── assets/
 │   ├── price-without-vat.css       # Front-end styling for the dual-price block
-│   ├── pwv-variation.js            # Live per-variation update on single product pages
+│   ├── pwv-admin.js                # Settings page: Select2 roles + conditional row
+│   ├── pwv-blocks.js               # Cart/Checkout blocks integration (wc.blocksCheckout)
 │   ├── ttrp-admin.css              # Shared TTRP admin design system (settings page only)
 │   ├── ttrp-logo.svg               # Brand menu icon
 │   └── ttrp.svg                    # Settings footer logo
@@ -69,20 +70,26 @@ the roles field is a Select2 multi-select that is only shown when the audience i
 |---|---|---|
 | `before_woocommerce_init` | (closure) | HPOS compatibility |
 | `init` | `ttrp_pwv_init` | textdomain, admin menu, conditional front-end hooks |
-| `woocommerce_single_product_summary` @11 | `ttrp_pwv_render_single` | After the price (10) |
-| `woocommerce_after_shop_loop_item_title` @11 | `ttrp_pwv_render_archive` | After the loop price (10) |
-| `woocommerce_cart_item_subtotal` | `ttrp_pwv_cart_item_subtotal` | Cart + checkout; `is_cart()`/`is_checkout()` gate the two toggles |
-| `woocommerce_available_variation` | `ttrp_pwv_available_variation` | Injects per-variation `ttrp_pwv_html` for the JS |
-| `wp_enqueue_scripts` | `ttrp_pwv_enqueue_front_assets` | CSS always; variation JS only on single product pages when displayed |
+| `woocommerce_get_price_html` @99 | `ttrp_pwv_filter_price_html` | Single + archive; works for classic, block templates, and Elementor since they all call `get_price_html()`. Variations update natively (each variation's price HTML runs through it). |
+| `woocommerce_cart_item_subtotal` @99 | `ttrp_pwv_cart_item_subtotal` | Classic/Elementor cart + checkout; **replaces** the subtotal with the two VAT lines. `is_cart()`/`is_checkout()` gate the two toggles |
+| `woocommerce_blocks_loaded` | `ttrp_pwv_register_store_api_data` | Exposes per-line incl/excl on the Store API `cart-items` endpoint |
+| `wp_enqueue_scripts` | `ttrp_pwv_enqueue_front_assets` | Front-end CSS |
+| `wp_enqueue_scripts` | `ttrp_pwv_enqueue_block_assets` | `pwv-blocks.js` on block cart/checkout (depends on `wc-blocks-checkout`) |
 
 ## Key behaviours to preserve
 
-- **Audience gate** — `ttrp_pwv_should_display()` is checked in every render path.
-  Pure helper `ttrp_pwv_user_matches( $user_roles, $allowed_roles )` is unit-tested.
+- **Audience gate** — `ttrp_pwv_should_display()` is checked in every render path; it also
+  returns false when `wc_tax_enabled()` is false. Pure helper
+  `ttrp_pwv_user_matches( $user_roles, $allowed_roles )` is unit-tested.
+- **Single context** — `ttrp_pwv_filter_price_html` only acts on the main product
+  (`ttrp_pwv_is_main_product()`, which resolves variations to their parent), so related/
+  upsell products on a single page are not annotated.
 - **Tax status** — non-`taxable` products/variations are skipped (no VAT distinction).
-- **Variable products** — `ttrp_pwv_variable_range_html()` builds a min–max range with
-  `wc_get_price_(in|ex)cluding_tax( $product, ['price'=>$raw] )`. The JS keeps the
-  parent range markup and restores it on `reset_data`.
+- **Variable products** — `ttrp_pwv_variable_range_html()` builds a min–max range; selected
+  variations are handled by WC's native variation price update (no custom JS).
+- **Cart/Checkout = two prices** — classic path replaces the subtotal; the blocks path
+  (`pwv-blocks.js`) reformats `subtotalPriceFormat` so `<price/>` (the store-displayed
+  price, labelled per `woocommerce_tax_display_cart`) shows alongside the complementary one.
 - **Roles list** — `ttrp_pwv_get_roles()` reads `wp_roles()->get_names()`, so any role
   (including Wholesale Customer) appears automatically.
 

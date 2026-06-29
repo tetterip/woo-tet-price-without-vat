@@ -9,9 +9,11 @@ A lightweight WooCommerce plugin that shows product prices **with and without VA
 - Shows both the **incl. VAT** and **excl. VAT** price using WooCommerce's own tax calculations (`wc_get_price_including_tax()` / `wc_get_price_excluding_tax()`), so each product's tax class and tax status are respected.
 - **Audience targeting:** show the dual price to *everyone*, *logged-in users only*, or *selected user roles*. The roles list is built from your site's roles, so the Wholesale Customer role appears automatically.
 - **Per-location toggles:** enable/disable independently on the single product page, shop/category archives, cart, and checkout.
-- **Variable products:** shows a price range on archives, and updates live to the selected variation's prices on the product page.
+- **Works with classic themes, block themes, and Elementor** — prices are added through the `woocommerce_get_price_html` filter, which Elementor's Product Price widget, the `woocommerce/product-price` block, and classic templates all use.
+- **Cart & Checkout (classic, Elementor, and blocks):** shows exactly two prices — with and without VAT — instead of adding a redundant third next to the existing one.
+- **Variable products:** shows a price range, and selected variations update natively.
 - **Configurable lines & labels:** toggle each line on/off and customise the "incl. VAT" / "excl. VAT" labels.
-- Non-taxable products are skipped automatically (no misleading "with/without VAT" when there is no VAT).
+- Non-taxable products and tax-disabled stores are skipped automatically.
 - Translation-ready — ships with English (default) and Greek (`el`) translations.
 - Declared compatible with WooCommerce HPOS (High-Performance Order Storage).
 
@@ -53,9 +55,9 @@ A lightweight WooCommerce plugin that shows product prices **with and without VA
 
 ## How it works
 
-- **Single product / archives:** the dual-price block is rendered after the price via `woocommerce_single_product_summary` (priority 11) and `woocommerce_after_shop_loop_item_title` (priority 11).
-- **Cart / checkout:** the block is appended to the line subtotal via `woocommerce_cart_item_subtotal`, with `is_cart()` / `is_checkout()` deciding which toggle applies.
-- **Variations:** per-variation incl/excl HTML is injected into the variation data via `woocommerce_available_variation`, and `assets/pwv-variation.js` swaps it in on the `found_variation` event (restoring the range on `reset_data`).
+- **Single product / archives:** the dual-price lines are appended to the price via the `woocommerce_get_price_html` filter. Because Elementor's Product Price widget, the `woocommerce/product-price` block, and classic templates all call `get_price_html()`, this covers every theme/builder, and variations update natively.
+- **Cart / checkout (classic & Elementor):** the line subtotal is *replaced* with the with/without VAT lines via `woocommerce_cart_item_subtotal`, so only two prices show. `is_cart()` / `is_checkout()` decide which toggle applies.
+- **Cart / checkout (blocks):** per-line incl/excl prices are exposed on the Store API `cart-items` endpoint (`woocommerce_store_api_register_endpoint_data`), and `assets/pwv-blocks.js` reformats the line subtotal via WooCommerce's `wc.blocksCheckout` registered filters — no build step required.
 
 ---
 
