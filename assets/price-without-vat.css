@@ -1,0 +1,36 @@
+/* Price With and Without VAT for WooCommerce */
+
+.ttrp-pwv {
+	display: block;
+	margin: 0.35em 0 0.5em;
+	font-size: 0.85em;
+	line-height: 1.5;
+	color: var(--ttrp-pwv-color, #555);
+}
+
+.ttrp-pwv__line {
+	display: block;
+}
+
+.ttrp-pwv__amount {
+	font-weight: 600;
+}
+
+.ttrp-pwv__label {
+	opacity: 0.8;
+	font-weight: 400;
+}
+
+/* Compact inline variant for archives and cart/checkout. */
+.ttrp-pwv--archive,
+.ttrp-pwv--cart {
+	font-size: 0.8em;
+}
+
+.ttrp-pwv--cart {
+	margin: 0.25em 0 0;
+}
+
+.ttrp-pwv--cart .ttrp-pwv__line {
+	display: block;
+}

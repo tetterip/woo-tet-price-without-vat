@@ -1,0 +1,95 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Price With and Without VAT for WooCommerce 1.0.0\n"
+"Report-Msgid-Bugs-To: https://ttrp.gr\n"
+"POT-Creation-Date: 2026-06-29 00:00+0000\n"
+"PO-Revision-Date: 2026-06-29 00:00+0000\n"
+"Last-Translator: ttrp.gr\n"
+"Language-Team: ttrp.gr\n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Domain: price-without-vat\n"
+
+msgid "incl. VAT"
+msgstr "με ΦΠΑ"
+
+msgid "excl. VAT"
+msgstr "χωρίς ΦΠΑ"
+
+msgid "Price With/Without VAT"
+msgstr "Τιμή με/χωρίς ΦΠΑ"
+
+msgid "Settings saved."
+msgstr "Οι ρυθμίσεις αποθηκεύτηκαν."
+
+msgid "Audience"
+msgstr "Κοινό"
+
+msgid "Everyone"
+msgstr "Όλοι"
+
+msgid "Logged-in users only"
+msgstr "Μόνο συνδεδεμένοι χρήστες"
+
+msgid "Selected user roles"
+msgstr "Επιλεγμένοι ρόλοι χρηστών"
+
+msgid "Show prices to"
+msgstr "Εμφάνιση τιμών σε"
+
+msgid "Choose who sees the with/without VAT prices."
+msgstr "Επιλέξτε ποιος βλέπει τις τιμές με/χωρίς ΦΠΑ."
+
+msgid "User roles"
+msgstr "Ρόλοι χρηστών"
+
+msgid "Only used when \"Selected user roles\" is chosen above."
+msgstr "Χρησιμοποιείται μόνο όταν έχει επιλεγεί «Επιλεγμένοι ρόλοι χρηστών» παραπάνω."
+
+msgid "Display locations"
+msgstr "Σημεία εμφάνισης"
+
+msgid "Single product page"
+msgstr "Σελίδα προϊόντος"
+
+msgid "Shop / category archives"
+msgstr "Κατάστημα / αρχεία κατηγοριών"
+
+msgid "Cart"
+msgstr "Καλάθι"
+
+msgid "Checkout"
+msgstr "Ταμείο"
+
+msgid "Show here"
+msgstr "Εμφάνιση εδώ"
+
+msgid "Price lines"
+msgstr "Γραμμές τιμής"
+
+msgid "Price including VAT"
+msgstr "Τιμή με ΦΠΑ"
+
+msgid "Show the price including VAT"
+msgstr "Εμφάνιση της τιμής με ΦΠΑ"
+
+msgid "Label shown next to the price including VAT."
+msgstr "Ετικέτα που εμφανίζεται δίπλα στην τιμή με ΦΠΑ."
+
+msgid "Price excluding VAT"
+msgstr "Τιμή χωρίς ΦΠΑ"
+
+msgid "Show the price excluding VAT"
+msgstr "Εμφάνιση της τιμής χωρίς ΦΠΑ"
+
+msgid "Label shown next to the price excluding VAT."
+msgstr "Ετικέτα που εμφανίζεται δίπλα στην τιμή χωρίς ΦΠΑ."
+
+msgid "Save settings"
+msgstr "Αποθήκευση ρυθμίσεων"
+
+msgid "Price With/Without VAT by"
+msgstr "Τιμή με/χωρίς ΦΠΑ από"
