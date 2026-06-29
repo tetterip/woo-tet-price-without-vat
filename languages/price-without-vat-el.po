@@ -73,6 +73,9 @@ msgstr "Ταμείο"
 msgid "Price lines"
 msgstr "Γραμμές τιμής"
 
+msgid "The price that matches your WooCommerce tax display setting is shown as a suffix on the main price; the other is added on a separate line below."
+msgstr "Η τιμή που αντιστοιχεί στη ρύθμιση εμφάνισης ΦΠΑ του WooCommerce εμφανίζεται ως κατάληξη στην κύρια τιμή· η άλλη προστίθεται σε ξεχωριστή γραμμή από κάτω."
+
 msgid "Price including VAT"
 msgstr "Τιμή με ΦΠΑ"
 

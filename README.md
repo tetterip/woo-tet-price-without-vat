@@ -11,7 +11,7 @@ A lightweight WooCommerce plugin that shows product prices **with and without VA
 - **WooCommerce Wholesale Prices aware:** for logged-in wholesale customers, the with/without VAT prices are computed from the wholesale price (simple, variation, and variable range), falling back to the regular price for everyone else.
 - **Per-location toggles:** enable/disable independently on the single product page, shop/category archives, cart, and checkout.
 - **Works with classic themes, block themes, and Elementor** — prices are added through the `woocommerce_get_price_html` filter, which Elementor's Product Price widget, the `woocommerce/product-price` block, and classic templates all use.
-- **Cart & Checkout (classic, Elementor, and blocks):** shows exactly two prices — with and without VAT — instead of adding a redundant third next to the existing one.
+- **Keeps WooCommerce's price + suffix + one line:** the main price is left as WooCommerce renders it, gets a VAT suffix matching your tax-display setting (e.g. `incl. VAT`), and the complementary price is added on one line below (e.g. `excl. VAT`). Works on product, archive, cart, and checkout (classic, Elementor, and blocks).
 - **Variable products:** shows a price range, and selected variations update natively.
 - **Configurable lines & labels:** toggle each line on/off and customise the "incl. VAT" / "excl. VAT" labels.
 - Non-taxable products and tax-disabled stores are skipped automatically.
@@ -56,9 +56,10 @@ A lightweight WooCommerce plugin that shows product prices **with and without VA
 
 ## How it works
 
-- **Single product / archives:** the dual-price lines are appended to the price via the `woocommerce_get_price_html` filter. Because Elementor's Product Price widget, the `woocommerce/product-price` block, and classic templates all call `get_price_html()`, this covers every theme/builder, and variations update natively.
-- **Cart / checkout (classic & Elementor):** the line subtotal is *replaced* with the with/without VAT lines via `woocommerce_cart_item_subtotal`, so only two prices show. `is_cart()` / `is_checkout()` decide which toggle applies.
-- **Cart / checkout (blocks):** per-line incl/excl prices are exposed on the Store API `cart-items` endpoint (`woocommerce_store_api_register_endpoint_data`), and `assets/pwv-blocks.js` reformats the line subtotal via WooCommerce's `wc.blocksCheckout` registered filters — no build step required.
+- **Single product / archives:** a VAT suffix and the complementary price line are appended to the price via the `woocommerce_get_price_html` filter. Because Elementor's Product Price widget, the `woocommerce/product-price` block, and classic templates all call `get_price_html()`, this covers every theme/builder, and variations update natively.
+- **Cart / checkout (classic & Elementor):** the suffix + complementary line are appended to the line subtotal via `woocommerce_cart_item_subtotal`. `is_cart()` / `is_checkout()` decide which toggle applies.
+- **Cart / checkout (blocks):** per-line incl/excl prices are exposed on the Store API `cart-items` endpoint (`woocommerce_store_api_register_endpoint_data`), and `assets/pwv-blocks.js` reformats the line subtotal via WooCommerce's `wc.blocksCheckout` registered filters (suffix + complementary) — no build step required.
+- **Which side is which:** the price matching your *tax display* setting becomes the suffix; the other becomes the line. Driven by `woocommerce_tax_display_shop` (product/archive) and `woocommerce_tax_display_cart` (cart/checkout).
 
 ---
 

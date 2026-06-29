@@ -76,19 +76,27 @@ check( 'multiple allowed, one match returns true', ttrp_pwv_user_matches( array(
 $GLOBALS['ttrp_pwv_test_options']['ttrp_pwv_settings'] = array(
 	'label_incl' => 'incl. VAT',
 	'label_excl' => 'excl. VAT',
+	// show_incl / show_excl fall back to the 'yes' defaults.
 );
-// Bust the static cache populated during load (defaults only).
-$markup = ttrp_pwv_lines_markup( '<span>10</span>', '<span>8</span>', 'single', true, true );
-check( 'markup wraps in ttrp-pwv container', strpos( $markup, 'ttrp-pwv ttrp-pwv--single' ) !== false );
-check( 'markup includes incl line', strpos( $markup, 'ttrp-pwv__incl' ) !== false );
-check( 'markup includes excl line', strpos( $markup, 'ttrp-pwv__excl' ) !== false );
 
-$only_excl = ttrp_pwv_lines_markup( '<span>10</span>', '<span>8</span>', 'cart', false, true );
-check( 'incl hidden when show_incl false', strpos( $only_excl, 'ttrp-pwv__incl' ) === false );
-check( 'excl present when show_excl true', strpos( $only_excl, 'ttrp-pwv__excl' ) !== false );
+// Store displays incl: main price suffixed "incl. VAT", complementary excl line.
+$out_incl = ttrp_pwv_suffix_and_line( '<span>10</span>', '<span>8</span>', 'single', 'incl' );
+check( 'incl mode: suffix present', strpos( $out_incl, 'ttrp-pwv__suffix' ) !== false );
+check( 'incl mode: suffix labelled incl. VAT', strpos( $out_incl, 'incl. VAT' ) !== false );
+check( 'incl mode: complementary line present', strpos( $out_incl, 'ttrp-pwv__comp' ) !== false );
+check( 'incl mode: complementary amount is the excl price', strpos( $out_incl, '<span>8</span>' ) !== false );
+check( 'incl mode: complementary labelled excl. VAT', strpos( $out_incl, 'excl. VAT' ) !== false );
 
-$none = ttrp_pwv_lines_markup( '', '', 'single', true, true );
-check( 'empty inputs yield empty string', $none === '' );
+// Store displays excl: main price suffixed "excl. VAT", complementary incl line.
+$out_excl = ttrp_pwv_suffix_and_line( '<span>10</span>', '<span>8</span>', 'single', 'excl' );
+check( 'excl mode: complementary amount is the incl price', strpos( $out_excl, '<span>10</span>' ) !== false );
+check( 'excl mode: complementary line present', strpos( $out_excl, 'ttrp-pwv__comp' ) !== false );
+
+// ttrp_pwv_display_mode reads the WooCommerce tax-display options.
+$GLOBALS['ttrp_pwv_test_options']['woocommerce_tax_display_shop'] = 'incl';
+$GLOBALS['ttrp_pwv_test_options']['woocommerce_tax_display_cart'] = 'excl';
+check( 'display mode (shop) = incl', 'incl' === ttrp_pwv_display_mode( 'single' ) );
+check( 'display mode (cart) = excl', 'excl' === ttrp_pwv_display_mode( 'cart' ) );
 
 // --- ttrp_pwv_wholesale_prices() (WooCommerce Wholesale Prices integration) -
 // Stub the WC tax helpers and the Wholesale Prices plugin classes.

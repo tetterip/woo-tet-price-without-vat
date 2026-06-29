@@ -3,7 +3,7 @@
  * Plugin Name:       Price With and Without VAT for WooCommerce
  * Plugin URI:        https://github.com/tetterip/woo-tet-price-without-vat
  * Description:       Shows product prices with and without VAT on the single product page, shop/category archives, and cart/checkout. Audience can be everyone, logged-in users, or selected roles (e.g. wholesale customers).
- * Version:           1.3.0
+ * Version:           1.4.0
  * Author:            Michalis Tetteris
  * Author URI:        https://ttrp.gr
  * License:           GPL-2.0+
@@ -214,7 +214,7 @@ function ttrp_pwv_get_html( $product, $context = 'single' ) {
 		$excl_html = wc_price( $excl );
 	}
 
-	return ttrp_pwv_lines_markup( $incl_html, $excl_html, $context, $show_incl, $show_excl );
+	return ttrp_pwv_suffix_and_line( $incl_html, $excl_html, $context, ttrp_pwv_display_mode( $context ) );
 }
 
 /**
@@ -326,33 +326,62 @@ function ttrp_pwv_wholesale_range( $product ) {
 }
 
 /**
- * Assemble the two labelled price lines.
+ * Whether the displayed price already includes tax in the given context.
+ *
+ * @param string $context 'single' | 'archive' | 'cart'.
+ * @return string 'incl' | 'excl'.
  */
-function ttrp_pwv_lines_markup( $incl_html, $excl_html, $context, $show_incl, $show_excl ) {
+function ttrp_pwv_display_mode( $context ) {
+	$option = ( 'cart' === $context )
+		? get_option( 'woocommerce_tax_display_cart' )
+		: get_option( 'woocommerce_tax_display_shop' );
+
+	return 'excl' === $option ? 'excl' : 'incl';
+}
+
+/**
+ * Markup appended after WooCommerce's main price: a suffix label on the main
+ * price (matching the store's tax-display mode) plus one line for the
+ * complementary VAT price.
+ *
+ * @param string $incl_html     Formatted including-VAT price HTML.
+ * @param string $excl_html     Formatted excluding-VAT price HTML.
+ * @param string $context       'single' | 'archive' | 'cart'.
+ * @param string $display_mode  'incl' | 'excl' — what the main price represents.
+ * @return string
+ */
+function ttrp_pwv_suffix_and_line( $incl_html, $excl_html, $context, $display_mode ) {
+	$show_incl  = 'no' !== ttrp_pwv_setting( 'show_incl' );
+	$show_excl  = 'no' !== ttrp_pwv_setting( 'show_excl' );
 	$label_incl = ttrp_pwv_setting( 'label_incl' );
 	$label_excl = ttrp_pwv_setting( 'label_excl' );
 
-	$lines = '';
-	if ( $show_incl && '' !== $incl_html ) {
-		$lines .= sprintf(
-			'<span class="ttrp-pwv__line ttrp-pwv__incl"><span class="ttrp-pwv__amount">%s</span> <span class="ttrp-pwv__label">%s</span></span>',
-			wp_kses_post( $incl_html ),
-			esc_html( $label_incl )
-		);
+	$display_is_incl = ( 'incl' === $display_mode );
+
+	// The displayed (main) price is labelled with a suffix; the other VAT
+	// variant is shown on its own line below.
+	$suffix_label = $display_is_incl ? $label_incl : $label_excl;
+	$suffix_show  = $display_is_incl ? $show_incl : $show_excl;
+	$comp_html    = $display_is_incl ? $excl_html : $incl_html;
+	$comp_label   = $display_is_incl ? $label_excl : $label_incl;
+	$comp_show    = $display_is_incl ? $show_excl : $show_incl;
+
+	$out = '';
+
+	if ( $suffix_show && '' !== $suffix_label ) {
+		$out .= sprintf( ' <span class="ttrp-pwv__suffix">%s</span>', esc_html( $suffix_label ) );
 	}
-	if ( $show_excl && '' !== $excl_html ) {
-		$lines .= sprintf(
-			'<span class="ttrp-pwv__line ttrp-pwv__excl"><span class="ttrp-pwv__amount">%s</span> <span class="ttrp-pwv__label">%s</span></span>',
-			wp_kses_post( $excl_html ),
-			esc_html( $label_excl )
+
+	if ( $comp_show && '' !== $comp_html ) {
+		$out .= sprintf(
+			'<span class="ttrp-pwv ttrp-pwv--%s"><span class="ttrp-pwv__line ttrp-pwv__comp"><span class="ttrp-pwv__amount">%s</span> <span class="ttrp-pwv__label">%s</span></span></span>',
+			esc_attr( $context ),
+			wp_kses_post( $comp_html ),
+			esc_html( $comp_label )
 		);
 	}
 
-	if ( '' === $lines ) {
-		return '';
-	}
-
-	return sprintf( '<span class="ttrp-pwv ttrp-pwv--%s">%s</span>', esc_attr( $context ), $lines );
+	return $out;
 }
 
 // ---------------------------------------------------------------------------
@@ -440,16 +469,13 @@ function ttrp_pwv_cart_item_subtotal( $subtotal, $cart_item, $cart_item_key ) {
 	}
 
 	$qty       = isset( $cart_item['quantity'] ) ? (int) $cart_item['quantity'] : 1;
-	$show_incl = 'no' !== ttrp_pwv_setting( 'show_incl' );
-	$show_excl = 'no' !== ttrp_pwv_setting( 'show_excl' );
+	$incl_html = wc_price( wc_get_price_including_tax( $product, array( 'qty' => $qty ) ) );
+	$excl_html = wc_price( wc_get_price_excluding_tax( $product, array( 'qty' => $qty ) ) );
 
-	$incl_html = $show_incl ? wc_price( wc_get_price_including_tax( $product, array( 'qty' => $qty ) ) ) : '';
-	$excl_html = $show_excl ? wc_price( wc_get_price_excluding_tax( $product, array( 'qty' => $qty ) ) ) : '';
-
-	// Replace the subtotal with the with/without VAT lines so the customer sees
-	// exactly two prices (with + without), not the original price plus two.
-	$markup = ttrp_pwv_lines_markup( $incl_html, $excl_html, 'cart', $show_incl, $show_excl );
-	return '' === $markup ? $subtotal : $markup;
+	// Keep WooCommerce's subtotal, add a VAT suffix to it, and append one line
+	// for the complementary VAT price.
+	$append = ttrp_pwv_suffix_and_line( $incl_html, $excl_html, 'cart', ttrp_pwv_display_mode( 'cart' ) );
+	return '' === $append ? $subtotal : $subtotal . $append;
 }
 
 // ---------------------------------------------------------------------------
@@ -751,6 +777,7 @@ function ttrp_pwv_render_settings(): void {
 			</table>
 
 			<h2><?php esc_html_e( 'Price lines', 'price-without-vat' ); ?></h2>
+			<p class="description"><?php esc_html_e( 'The price that matches your WooCommerce tax display setting is shown as a suffix on the main price; the other is added on a separate line below.', 'price-without-vat' ); ?></p>
 			<table class="form-table" role="presentation">
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Price including VAT', 'price-without-vat' ); ?></th>

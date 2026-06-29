@@ -71,6 +71,9 @@ msgstr ""
 msgid "Price lines"
 msgstr ""
 
+msgid "The price that matches your WooCommerce tax display setting is shown as a suffix on the main price; the other is added on a separate line below."
+msgstr ""
+
 msgid "Price including VAT"
 msgstr ""
 

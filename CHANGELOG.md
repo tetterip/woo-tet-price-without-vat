@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0] - 2026-06-29
+
+### Changed
+- Reworked the display everywhere (single, archive, cart, checkout): instead of replacing/adding two labelled price lines, the plugin now **keeps WooCommerce's main price**, adds a **VAT suffix** to it matching the store's tax-display setting (`woocommerce_tax_display_shop` / `woocommerce_tax_display_cart`), and adds **one** line for the complementary VAT price. So a store showing prices incl. VAT renders e.g. `10,00 € incl. VAT` + a single `8,06 € excl. VAT` line. The `show incl` / `show excl` toggles now control each VAT side (whichever matches the display becomes the suffix, the other becomes the line).
+
+---
+
 ## [1.3.0] - 2026-06-29
 
 ### Added

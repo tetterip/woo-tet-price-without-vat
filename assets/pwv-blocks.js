@@ -43,15 +43,19 @@
 				return value;
 			}
 
-			// <price/> is the store-displayed subtotal (incl or excl per settings).
+			// <price/> is the store-displayed subtotal (incl or excl per settings);
+			// it gets a suffix label, and the complementary VAT price is appended.
 			var displayedIsExcl   = 'excl' === data.displayMode;
 			var displayedLabel    = displayedIsExcl ? data.labelExcl : data.labelIncl;
+			var showDisplayed     = displayedIsExcl ? data.showExcl : data.showIncl;
 			var complementary     = displayedIsExcl ? d.incl : d.excl;
 			var complementaryLbl  = displayedIsExcl ? data.labelIncl : data.labelExcl;
-			// The complementary line follows its own show_incl / show_excl toggle.
 			var showComplementary = displayedIsExcl ? data.showIncl : data.showExcl;
 
-			var out = '<price/> ' + ( displayedLabel || '' );
+			var out = '<price/>';
+			if ( showDisplayed && displayedLabel ) {
+				out += ' ' + displayedLabel;
+			}
 			if ( complementary && showComplementary ) {
 				out += ' / ' + complementary + ' ' + ( complementaryLbl || '' );
 			}

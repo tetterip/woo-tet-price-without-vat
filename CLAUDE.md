@@ -87,9 +87,13 @@ the roles field is a Select2 multi-select that is only shown when the audience i
 - **Tax status** — non-`taxable` products/variations are skipped (no VAT distinction).
 - **Variable products** — `ttrp_pwv_variable_range_html()` builds a min–max range; selected
   variations are handled by WC's native variation price update (no custom JS).
-- **Cart/Checkout = two prices** — classic path replaces the subtotal; the blocks path
-  (`pwv-blocks.js`) reformats `subtotalPriceFormat` so `<price/>` (the store-displayed
-  price, labelled per `woocommerce_tax_display_cart`) shows alongside the complementary one.
+- **Display model** — `ttrp_pwv_suffix_and_line()` keeps WooCommerce's main price, adds a
+  VAT **suffix** matching the tax-display mode (`ttrp_pwv_display_mode()` →
+  `woocommerce_tax_display_shop` / `_cart`), and appends **one** line for the complementary
+  VAT price. `show_incl` / `show_excl` each gate their VAT side (suffix when it matches the
+  display, line when it's the complement). Classic cart appends to the subtotal; the blocks
+  path (`pwv-blocks.js`) reformats `subtotalPriceFormat` the same way (`<price/>` + suffix +
+  complement).
 - **Roles list** — `ttrp_pwv_get_roles()` reads `wp_roles()->get_names()`, so any role
   (including Wholesale Customer) appears automatically.
 - **Wholesale Prices integration** — `ttrp_pwv_wholesale_prices()` / `ttrp_pwv_wholesale_range()`

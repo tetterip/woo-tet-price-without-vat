@@ -21,6 +21,14 @@
 	font-weight: 400;
 }
 
+/* Suffix shown inline, right after WooCommerce's main price. */
+.ttrp-pwv__suffix {
+	font-size: 0.8em;
+	font-weight: 400;
+	opacity: 0.8;
+	white-space: nowrap;
+}
+
 /* Compact inline variant for archives and cart/checkout. */
 .ttrp-pwv--archive,
 .ttrp-pwv--cart {
