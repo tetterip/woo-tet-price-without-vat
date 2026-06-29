@@ -8,6 +8,7 @@ A lightweight WooCommerce plugin that shows product prices **with and without VA
 
 - Shows both the **incl. VAT** and **excl. VAT** price using WooCommerce's own tax calculations (`wc_get_price_including_tax()` / `wc_get_price_excluding_tax()`), so each product's tax class and tax status are respected.
 - **Audience targeting:** show the dual price to *everyone*, *logged-in users only*, or *selected user roles*. The roles list is built from your site's roles, so the Wholesale Customer role appears automatically.
+- **WooCommerce Wholesale Prices aware:** for logged-in wholesale customers, the with/without VAT prices are computed from the wholesale price (simple, variation, and variable range), falling back to the regular price for everyone else.
 - **Per-location toggles:** enable/disable independently on the single product page, shop/category archives, cart, and checkout.
 - **Works with classic themes, block themes, and Elementor** — prices are added through the `woocommerce_get_price_html` filter, which Elementor's Product Price widget, the `woocommerce/product-price` block, and classic templates all use.
 - **Cart & Checkout (classic, Elementor, and blocks):** shows exactly two prices — with and without VAT — instead of adding a redundant third next to the existing one.

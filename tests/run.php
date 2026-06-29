@@ -90,6 +90,49 @@ check( 'excl present when show_excl true', strpos( $only_excl, 'ttrp-pwv__excl' 
 $none = ttrp_pwv_lines_markup( '', '', 'single', true, true );
 check( 'empty inputs yield empty string', $none === '' );
 
+// --- ttrp_pwv_wholesale_prices() (WooCommerce Wholesale Prices integration) -
+// Stub the WC tax helpers and the Wholesale Prices plugin classes.
+function wc_get_price_including_tax( $product, $args = array() ) {
+	return (float) $args['price'] * 1.24;
+}
+function wc_get_price_excluding_tax( $product, $args = array() ) {
+	return (float) $args['price'];
+}
+class WWP_Wholesale_Roles {
+	public static function getInstance() {
+		static $i;
+		if ( ! $i ) {
+			$i = new self();
+		}
+		return $i;
+	}
+	public function getUserWholesaleRole( $user = null ) {
+		return $GLOBALS['ttrp_test_roles'];
+	}
+}
+class WWP_Wholesale_Prices {
+	public static function get_product_raw_wholesale_price( $product_id, $roles ) {
+		return $GLOBALS['ttrp_test_raw'];
+	}
+}
+$stub_product = new class() {
+	public function get_id() {
+		return 1; }
+};
+
+$GLOBALS['ttrp_test_roles'] = array( 'wholesale_customer' );
+$GLOBALS['ttrp_test_raw']   = '100';
+$w = ttrp_pwv_wholesale_prices( $stub_product );
+check( 'wholesale incl computed from raw price', is_array( $w ) && 124.0 === $w['incl'] );
+check( 'wholesale excl computed from raw price', is_array( $w ) && 100.0 === $w['excl'] );
+
+$GLOBALS['ttrp_test_roles'] = array();
+check( 'non-wholesale user falls back (null)', null === ttrp_pwv_wholesale_prices( $stub_product ) );
+
+$GLOBALS['ttrp_test_roles'] = array( 'wholesale_customer' );
+$GLOBALS['ttrp_test_raw']   = '';
+check( 'no wholesale price falls back (null)', null === ttrp_pwv_wholesale_prices( $stub_product ) );
+
 // --- Report ----------------------------------------------------------------
 echo "\n";
 if ( $failures ) {

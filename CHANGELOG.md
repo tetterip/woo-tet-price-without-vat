@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] - 2026-06-29
+
+### Added
+- **WooCommerce Wholesale Prices integration.** For logged-in wholesale customers, the with/without VAT lines on product and archive pages are now computed from the wholesale price (simple products, variations, and the variable-product range) instead of the regular retail price. Reads the raw wholesale price via `WWP_Wholesale_Prices::get_product_raw_wholesale_price()` and the `{role}_min_wholesale_price` / `{role}_max_wholesale_price` meta, then applies WooCommerce's own tax functions so the VAT math matches regular products. Falls back to the regular price when the plugin is inactive, the user isn't a wholesale customer, or no wholesale price is set. (Cart/checkout already used the wholesale price WooCommerce applies to the cart.)
+
+---
+
 ## [1.2.0] - 2026-06-29
 
 ### Added

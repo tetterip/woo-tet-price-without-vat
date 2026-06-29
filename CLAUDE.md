@@ -92,6 +92,13 @@ the roles field is a Select2 multi-select that is only shown when the audience i
   price, labelled per `woocommerce_tax_display_cart`) shows alongside the complementary one.
 - **Roles list** — `ttrp_pwv_get_roles()` reads `wp_roles()->get_names()`, so any role
   (including Wholesale Customer) appears automatically.
+- **Wholesale Prices integration** — `ttrp_pwv_wholesale_prices()` / `ttrp_pwv_wholesale_range()`
+  read the WooCommerce Wholesale Prices plugin's raw wholesale price
+  (`WWP_Wholesale_Prices::get_product_raw_wholesale_price()` and the
+  `{role}_min_wholesale_price` / `{role}_max_wholesale_price` meta) for the current user's
+  wholesale role (`WWP_Wholesale_Roles::getInstance()->getUserWholesaleRole()`), then run it
+  through WC's tax functions. Returns null (→ regular price) when not applicable. Only the
+  product/archive path needs this; cart/checkout already price the wholesale cart item.
 
 ## Requirements
 

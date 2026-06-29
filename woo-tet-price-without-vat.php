@@ -3,7 +3,7 @@
  * Plugin Name:       Price With and Without VAT for WooCommerce
  * Plugin URI:        https://github.com/tetterip/woo-tet-price-without-vat
  * Description:       Shows product prices with and without VAT on the single product page, shop/category archives, and cart/checkout. Audience can be everyone, logged-in users, or selected roles (e.g. wholesale customers).
- * Version:           1.2.0
+ * Version:           1.3.0
  * Author:            Michalis Tetteris
  * Author URI:        https://ttrp.gr
  * License:           GPL-2.0+
@@ -206,32 +206,123 @@ function ttrp_pwv_get_html( $product, $context = 'single' ) {
 		$incl_html = ttrp_pwv_variable_range_html( $product, 'incl' );
 		$excl_html = ttrp_pwv_variable_range_html( $product, 'excl' );
 	} else {
-		$incl_html = wc_price( wc_get_price_including_tax( $product ) );
-		$excl_html = wc_price( wc_get_price_excluding_tax( $product ) );
+		// Use the wholesale price when the visitor is a wholesale customer.
+		$wholesale = ttrp_pwv_wholesale_prices( $product );
+		$incl      = null !== $wholesale ? $wholesale['incl'] : wc_get_price_including_tax( $product );
+		$excl      = null !== $wholesale ? $wholesale['excl'] : wc_get_price_excluding_tax( $product );
+		$incl_html = wc_price( $incl );
+		$excl_html = wc_price( $excl );
 	}
 
 	return ttrp_pwv_lines_markup( $incl_html, $excl_html, $context, $show_incl, $show_excl );
 }
 
 /**
- * Min–max range markup (incl/excl tax) for a variable product.
+ * Min–max range markup (incl/excl tax) for a variable product, honouring
+ * WooCommerce Wholesale Prices when the visitor is a wholesale customer.
  *
  * @param WC_Product_Variable $product Variable product.
  * @param string              $which   'incl' | 'excl'.
  * @return string
  */
 function ttrp_pwv_variable_range_html( $product, $which ) {
-	$min_raw = $product->get_variation_price( 'min', true );
-	$max_raw = $product->get_variation_price( 'max', true );
+	$wholesale = ttrp_pwv_wholesale_range( $product );
+	if ( null !== $wholesale ) {
+		$min_raw = $wholesale['min'];
+		$max_raw = $wholesale['max'];
+	} else {
+		$min_raw = $product->get_variation_price( 'min', true );
+		$max_raw = $product->get_variation_price( 'max', true );
+	}
 
-	$args    = 'incl' === $which ? 'wc_get_price_including_tax' : 'wc_get_price_excluding_tax';
-	$min     = call_user_func( $args, $product, array( 'price' => $min_raw ) );
-	$max     = call_user_func( $args, $product, array( 'price' => $max_raw ) );
+	$args = 'incl' === $which ? 'wc_get_price_including_tax' : 'wc_get_price_excluding_tax';
+	$min  = call_user_func( $args, $product, array( 'price' => $min_raw ) );
+	$max  = call_user_func( $args, $product, array( 'price' => $max_raw ) );
 
 	if ( $min === $max ) {
 		return wc_price( $min );
 	}
 	return wc_format_price_range( $min, $max );
+}
+
+// ---------------------------------------------------------------------------
+// WooCommerce Wholesale Prices integration
+// ---------------------------------------------------------------------------
+
+/**
+ * Current user's wholesale role keys (from the WooCommerce Wholesale Prices
+ * plugin), or an empty array when the plugin is inactive / user isn't wholesale.
+ *
+ * @return string[]
+ */
+function ttrp_pwv_wholesale_roles() {
+	if ( ! class_exists( 'WWP_Wholesale_Roles' ) ) {
+		return array();
+	}
+	$roles = WWP_Wholesale_Roles::getInstance()->getUserWholesaleRole();
+	return is_array( $roles ) ? $roles : array();
+}
+
+/**
+ * Wholesale incl/excl VAT amounts for a simple product or a variation.
+ *
+ * Reads the raw wholesale price the WooCommerce Wholesale Prices plugin stores
+ * for the current user's role, then runs it through WooCommerce's own tax
+ * functions so the VAT math matches regular products. Returns null to fall back
+ * to the regular price (no plugin, not a wholesale user, or no wholesale price).
+ *
+ * @param WC_Product $product Product or variation.
+ * @return array{incl:float,excl:float}|null
+ */
+function ttrp_pwv_wholesale_prices( $product ) {
+	if ( ! class_exists( 'WWP_Wholesale_Prices' ) || ! method_exists( 'WWP_Wholesale_Prices', 'get_product_raw_wholesale_price' ) ) {
+		return null;
+	}
+	$roles = ttrp_pwv_wholesale_roles();
+	if ( empty( $roles ) ) {
+		return null;
+	}
+
+	$raw = WWP_Wholesale_Prices::get_product_raw_wholesale_price( $product->get_id(), $roles );
+	if ( '' === $raw || null === $raw || ! is_numeric( $raw ) ) {
+		return null;
+	}
+
+	return array(
+		'incl' => wc_get_price_including_tax( $product, array( 'price' => $raw ) ),
+		'excl' => wc_get_price_excluding_tax( $product, array( 'price' => $raw ) ),
+	);
+}
+
+/**
+ * Wholesale min/max raw prices for a variable product, or null to fall back to
+ * the regular variation range. The Wholesale Prices plugin stores these on the
+ * parent as {role}_min_wholesale_price / {role}_max_wholesale_price.
+ *
+ * @param WC_Product $product Variable product.
+ * @return array{min:string,max:string}|null
+ */
+function ttrp_pwv_wholesale_range( $product ) {
+	if ( ! $product->is_type( 'variable' ) ) {
+		return null;
+	}
+	$roles = ttrp_pwv_wholesale_roles();
+	if ( empty( $roles ) ) {
+		return null;
+	}
+
+	$role    = $roles[0];
+	$min_raw = $product->get_meta( $role . '_min_wholesale_price', true );
+	$max_raw = $product->get_meta( $role . '_max_wholesale_price', true );
+
+	if ( ! is_numeric( $min_raw ) || ! is_numeric( $max_raw ) ) {
+		return null;
+	}
+
+	return array(
+		'min' => $min_raw,
+		'max' => $max_raw,
+	);
 }
 
 /**
