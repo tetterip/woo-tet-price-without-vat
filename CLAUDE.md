@@ -59,6 +59,10 @@ Settings page lives under the shared **ttrp.gr Plugins** menu
 (`ttrp_pwv_save_settings`), sanitized field-by-field. `ttrp_pwv_settings()` caches
 the merged option in a per-request static.
 
+`assets/pwv-admin.js` (enqueued with `wc-enhanced-select`) drives the settings UI:
+the roles field is a Select2 multi-select that is only shown when the audience is
+"Selected user roles". The display locations are a single labelled row of checkboxes.
+
 ## Hook map
 
 | Hook | Function | Notes |

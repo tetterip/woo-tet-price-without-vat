@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-06-29
+
+### Changed
+- Settings page: the "User roles" field is now a Select2 multi-select instead of a checkbox list.
+- The "User roles" row is shown only when the audience is set to "Selected user roles".
+- "Display locations" is now a single row labelled "Show in these locations" with the locations as checkboxes; the archive location label is shortened to "Shop".
+
+---
+
 ## [1.0.0] - 2026-06-29
 
 ### Added

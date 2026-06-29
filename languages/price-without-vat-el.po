@@ -46,26 +46,29 @@ msgstr "Επιλέξτε ποιος βλέπει τις τιμές με/χωρί
 msgid "User roles"
 msgstr "Ρόλοι χρηστών"
 
+msgid "Select roles…"
+msgstr "Επιλέξτε ρόλους…"
+
 msgid "Only used when \"Selected user roles\" is chosen above."
 msgstr "Χρησιμοποιείται μόνο όταν έχει επιλεγεί «Επιλεγμένοι ρόλοι χρηστών» παραπάνω."
 
 msgid "Display locations"
 msgstr "Σημεία εμφάνισης"
 
+msgid "Show in these locations"
+msgstr "Εμφάνιση σε αυτά τα σημεία"
+
 msgid "Single product page"
 msgstr "Σελίδα προϊόντος"
 
-msgid "Shop / category archives"
-msgstr "Κατάστημα / αρχεία κατηγοριών"
+msgid "Shop"
+msgstr "Κατάστημα"
 
 msgid "Cart"
 msgstr "Καλάθι"
 
 msgid "Checkout"
 msgstr "Ταμείο"
-
-msgid "Show here"
-msgstr "Εμφάνιση εδώ"
 
 msgid "Price lines"
 msgstr "Γραμμές τιμής"

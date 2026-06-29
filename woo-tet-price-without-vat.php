@@ -3,7 +3,7 @@
  * Plugin Name:       Price With and Without VAT for WooCommerce
  * Plugin URI:        https://github.com/tetterip/woo-tet-price-without-vat
  * Description:       Shows product prices with and without VAT on the single product page, shop/category archives, and cart/checkout. Audience can be everyone, logged-in users, or selected roles (e.g. wholesale customers).
- * Version:           1.0.0
+ * Version:           1.1.0
  * Author:            Michalis Tetteris
  * Author URI:        https://ttrp.gr
  * License:           GPL-2.0+
@@ -446,6 +446,16 @@ function ttrp_pwv_enqueue_admin_assets(): void {
 	}
 	wp_enqueue_style( 'woocommerce_admin_styles' );
 	wp_enqueue_style( 'ttrp-admin', plugins_url( 'assets/ttrp-admin.css', __FILE__ ), array(), TTRP_PWV_VERSION );
+
+	// Select2 for the roles field (WooCommerce ships it as wc-enhanced-select).
+	wp_enqueue_script( 'wc-enhanced-select' );
+	wp_enqueue_script(
+		'ttrp-pwv-admin',
+		plugins_url( 'assets/pwv-admin.js', __FILE__ ),
+		array( 'jquery', 'wc-enhanced-select' ),
+		TTRP_PWV_VERSION,
+		true
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -491,15 +501,14 @@ function ttrp_pwv_render_settings(): void {
 						<p class="description"><?php esc_html_e( 'Choose who sees the with/without VAT prices.', 'price-without-vat' ); ?></p>
 					</td>
 				</tr>
-				<tr class="ttrp-pwv-roles-row">
+				<tr class="ttrp-pwv-roles-row"<?php echo 'roles' === $s['audience'] ? '' : ' style="display:none;"'; ?>>
 					<th scope="row"><?php esc_html_e( 'User roles', 'price-without-vat' ); ?></th>
 					<td>
-						<?php foreach ( $all_roles as $role_key => $role_name ) : ?>
-							<label style="display:block;margin-bottom:4px;">
-								<input type="checkbox" name="ttrp_pwv[roles][]" value="<?php echo esc_attr( $role_key ); ?>" <?php checked( in_array( $role_key, (array) $s['roles'], true ) ); ?> />
-								<?php echo esc_html( $role_name ); ?>
-							</label>
-						<?php endforeach; ?>
+						<select name="ttrp_pwv[roles][]" id="ttrp_pwv_roles" class="wc-enhanced-select ttrp-pwv-roles-select" multiple="multiple" style="min-width:320px;" data-placeholder="<?php esc_attr_e( 'Select roles…', 'price-without-vat' ); ?>">
+							<?php foreach ( $all_roles as $role_key => $role_name ) : ?>
+								<option value="<?php echo esc_attr( $role_key ); ?>" <?php selected( in_array( $role_key, (array) $s['roles'], true ) ); ?>><?php echo esc_html( $role_name ); ?></option>
+							<?php endforeach; ?>
+						</select>
 						<p class="description"><?php esc_html_e( 'Only used when "Selected user roles" is chosen above.', 'price-without-vat' ); ?></p>
 					</td>
 				</tr>
@@ -507,25 +516,25 @@ function ttrp_pwv_render_settings(): void {
 
 			<h2><?php esc_html_e( 'Display locations', 'price-without-vat' ); ?></h2>
 			<table class="form-table" role="presentation">
-				<?php
-				$locations = array(
-					'show_single'   => __( 'Single product page', 'price-without-vat' ),
-					'show_archive'  => __( 'Shop / category archives', 'price-without-vat' ),
-					'show_cart'     => __( 'Cart', 'price-without-vat' ),
-					'show_checkout' => __( 'Checkout', 'price-without-vat' ),
-				);
-				foreach ( $locations as $key => $label ) :
-					?>
-					<tr>
-						<th scope="row"><?php echo esc_html( $label ); ?></th>
-						<td>
-							<label>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Show in these locations', 'price-without-vat' ); ?></th>
+					<td>
+						<?php
+						$locations = array(
+							'show_single'   => __( 'Single product page', 'price-without-vat' ),
+							'show_archive'  => __( 'Shop', 'price-without-vat' ),
+							'show_cart'     => __( 'Cart', 'price-without-vat' ),
+							'show_checkout' => __( 'Checkout', 'price-without-vat' ),
+						);
+						foreach ( $locations as $key => $label ) :
+							?>
+							<label style="display:block;margin-bottom:4px;">
 								<input type="checkbox" name="ttrp_pwv[<?php echo esc_attr( $key ); ?>]" value="yes" <?php checked( 'yes', $s[ $key ] ); ?> />
-								<?php esc_html_e( 'Show here', 'price-without-vat' ); ?>
+								<?php echo esc_html( $label ); ?>
 							</label>
-						</td>
-					</tr>
-				<?php endforeach; ?>
+						<?php endforeach; ?>
+					</td>
+				</tr>
 			</table>
 
 			<h2><?php esc_html_e( 'Price lines', 'price-without-vat' ); ?></h2>
