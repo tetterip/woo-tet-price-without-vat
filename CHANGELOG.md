@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.5.0] - 2026-06-30
+
+### Fixed
+- When the WooCommerce Wholesale Prices plugin is active, the VAT suffix was rendering on its own line *below* the wholesale price because the plugin wraps it in a block-level `.wholesale_price_container`. The suffix is now injected inside that container (right after the wholesale price), so it sits inline next to the wholesale amount on single product and archive pages.
+
+---
+
 ## [1.4.0] - 2026-06-29
 
 ### Changed

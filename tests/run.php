@@ -141,6 +141,24 @@ $GLOBALS['ttrp_test_roles'] = array( 'wholesale_customer' );
 $GLOBALS['ttrp_test_raw']   = '';
 check( 'no wholesale price falls back (null)', null === ttrp_pwv_wholesale_prices( $stub_product ) );
 
+// --- ttrp_pwv_merge_price_html() (wholesale-aware suffix placement) ---------
+$suffix = ' <span class="ttrp-pwv__suffix">incl. VAT</span>';
+$line   = '<span class="ttrp-pwv ttrp-pwv--single">…</span>';
+
+// Plain price: suffix appended inline, line after it.
+$plain = ttrp_pwv_merge_price_html( '<span class="price">10</span>', $suffix, $line );
+check( 'plain: suffix appended after price', strpos( $plain, '10</span> <span class="ttrp-pwv__suffix">' ) !== false );
+check( 'plain: line appended at end', substr( $plain, -strlen( $line ) ) === $line );
+
+// Wholesale container: suffix injected right after the wholesale suffix slot,
+// inside the block-level container, so it stays inline with the wholesale price.
+$ws        = '<span class="wholesale_price_container"><ins>23,40 €<small class="woocommerce-price-suffix wholesale-price-suffix"></small></ins></span>';
+$ws_merged = ttrp_pwv_merge_price_html( $ws, $suffix, $line );
+check( 'wholesale: suffix injected after the wholesale suffix slot', strpos( $ws_merged, '</small> <span class="ttrp-pwv__suffix">' ) !== false );
+check( 'wholesale: suffix stays inside the container', strpos( $ws_merged, $suffix . '</ins>' ) !== false );
+check( 'wholesale: suffix not left dangling after the container', strpos( $ws_merged, '</span>' . $suffix ) === false );
+check( 'wholesale: line still appended at end', substr( $ws_merged, -strlen( $line ) ) === $line );
+
 // --- Report ----------------------------------------------------------------
 echo "\n";
 if ( $failures ) {

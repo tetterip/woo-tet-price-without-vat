@@ -60,6 +60,7 @@ A lightweight WooCommerce plugin that shows product prices **with and without VA
 - **Cart / checkout (classic & Elementor):** the suffix + complementary line are appended to the line subtotal via `woocommerce_cart_item_subtotal`. `is_cart()` / `is_checkout()` decide which toggle applies.
 - **Cart / checkout (blocks):** per-line incl/excl prices are exposed on the Store API `cart-items` endpoint (`woocommerce_store_api_register_endpoint_data`), and `assets/pwv-blocks.js` reformats the line subtotal via WooCommerce's `wc.blocksCheckout` registered filters (suffix + complementary) — no build step required.
 - **Which side is which:** the price matching your *tax display* setting becomes the suffix; the other becomes the line. Driven by `woocommerce_tax_display_shop` (product/archive) and `woocommerce_tax_display_cart` (cart/checkout).
+- **Wholesale Prices compatibility:** when the WooCommerce Wholesale Prices plugin renders its block-level wholesale price container, the VAT suffix is injected inside it (next to the wholesale price) instead of being appended after it, so it stays inline rather than wrapping onto a new line.
 
 ---
 

@@ -3,7 +3,7 @@
  * Plugin Name:       Price With and Without VAT for WooCommerce
  * Plugin URI:        https://github.com/tetterip/woo-tet-price-without-vat
  * Description:       Shows product prices with and without VAT on the single product page, shop/category archives, and cart/checkout. Audience can be everyone, logged-in users, or selected roles (e.g. wholesale customers).
- * Version:           1.4.0
+ * Version:           1.5.0
  * Author:            Michalis Tetteris
  * Author URI:        https://ttrp.gr
  * License:           GPL-2.0+
@@ -181,22 +181,27 @@ function ttrp_pwv_should_display() {
  *
  * @param WC_Product $product Product (or variation) to price.
  * @param string     $context 'single' | 'archive' | 'cart'.
- * @return string HTML, or '' when nothing to show.
+ * @return array{suffix:string,line:string} Suffix + complementary line (both '' when nothing to show).
  */
 function ttrp_pwv_get_html( $product, $context = 'single' ) {
+	$empty = array(
+		'suffix' => '',
+		'line'   => '',
+	);
+
 	if ( ! $product instanceof WC_Product ) {
-		return '';
+		return $empty;
 	}
 
 	$show_incl = 'no' !== ttrp_pwv_setting( 'show_incl' );
 	$show_excl = 'no' !== ttrp_pwv_setting( 'show_excl' );
 	if ( ! $show_incl && ! $show_excl ) {
-		return '';
+		return $empty;
 	}
 
 	// Non-taxable products have no VAT distinction — skip.
 	if ( 'taxable' !== $product->get_tax_status() ) {
-		return '';
+		return $empty;
 	}
 
 	$incl_html = '';
@@ -214,7 +219,7 @@ function ttrp_pwv_get_html( $product, $context = 'single' ) {
 		$excl_html = wc_price( $excl );
 	}
 
-	return ttrp_pwv_suffix_and_line( $incl_html, $excl_html, $context, ttrp_pwv_display_mode( $context ) );
+	return ttrp_pwv_suffix_parts( $incl_html, $excl_html, $context, ttrp_pwv_display_mode( $context ) );
 }
 
 /**
@@ -351,6 +356,22 @@ function ttrp_pwv_display_mode( $context ) {
  * @return string
  */
 function ttrp_pwv_suffix_and_line( $incl_html, $excl_html, $context, $display_mode ) {
+	$parts = ttrp_pwv_suffix_parts( $incl_html, $excl_html, $context, $display_mode );
+	return $parts['suffix'] . $parts['line'];
+}
+
+/**
+ * Same as {@see ttrp_pwv_suffix_and_line()} but returns the suffix and the
+ * complementary line separately so callers can place them independently (the
+ * single/archive path injects the suffix inside the Wholesale Prices container).
+ *
+ * @param string $incl_html     Formatted including-VAT price HTML.
+ * @param string $excl_html     Formatted excluding-VAT price HTML.
+ * @param string $context       'single' | 'archive' | 'cart'.
+ * @param string $display_mode  'incl' | 'excl' — what the main price represents.
+ * @return array{suffix:string,line:string}
+ */
+function ttrp_pwv_suffix_parts( $incl_html, $excl_html, $context, $display_mode ) {
 	$show_incl  = 'no' !== ttrp_pwv_setting( 'show_incl' );
 	$show_excl  = 'no' !== ttrp_pwv_setting( 'show_excl' );
 	$label_incl = ttrp_pwv_setting( 'label_incl' );
@@ -366,14 +387,14 @@ function ttrp_pwv_suffix_and_line( $incl_html, $excl_html, $context, $display_mo
 	$comp_label   = $display_is_incl ? $label_excl : $label_incl;
 	$comp_show    = $display_is_incl ? $show_excl : $show_incl;
 
-	$out = '';
-
+	$suffix = '';
 	if ( $suffix_show && '' !== $suffix_label ) {
-		$out .= sprintf( ' <span class="ttrp-pwv__suffix">%s</span>', esc_html( $suffix_label ) );
+		$suffix = sprintf( ' <span class="ttrp-pwv__suffix">%s</span>', esc_html( $suffix_label ) );
 	}
 
+	$line = '';
 	if ( $comp_show && '' !== $comp_html ) {
-		$out .= sprintf(
+		$line = sprintf(
 			'<span class="ttrp-pwv ttrp-pwv--%s"><span class="ttrp-pwv__line ttrp-pwv__comp"><span class="ttrp-pwv__amount">%s</span> <span class="ttrp-pwv__label">%s</span></span></span>',
 			esc_attr( $context ),
 			wp_kses_post( $comp_html ),
@@ -381,7 +402,10 @@ function ttrp_pwv_suffix_and_line( $incl_html, $excl_html, $context, $display_mo
 		);
 	}
 
-	return $out;
+	return array(
+		'suffix' => $suffix,
+		'line'   => $line,
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -429,8 +453,49 @@ function ttrp_pwv_filter_price_html( $price_html, $product ) {
 		return $price_html;
 	}
 
-	$dual = ttrp_pwv_get_html( $product, $context );
-	return '' === $dual ? $price_html : $price_html . $dual;
+	$parts = ttrp_pwv_get_html( $product, $context );
+	if ( '' === $parts['suffix'] && '' === $parts['line'] ) {
+		return $price_html;
+	}
+	return ttrp_pwv_merge_price_html( $price_html, $parts['suffix'], $parts['line'] );
+}
+
+/**
+ * Merge the VAT suffix and complementary line into a product's price HTML.
+ *
+ * Normally the suffix is appended inline after WooCommerce's main price. When
+ * the WooCommerce Wholesale Prices plugin is active it renders the wholesale
+ * price inside a block-level `.wholesale_price_container`, which would push a
+ * trailing suffix onto its own line. In that case the suffix is injected inside
+ * the container (right after the wholesale price's suffix slot) so it stays next
+ * to the wholesale amount. The complementary line is always appended at the end.
+ *
+ * @param string $price_html  Existing price HTML.
+ * @param string $suffix_html VAT suffix markup (may be '').
+ * @param string $line_html   Complementary VAT line markup (may be '').
+ * @return string
+ */
+function ttrp_pwv_merge_price_html( $price_html, $suffix_html, $line_html ) {
+	if ( '' !== $suffix_html ) {
+		$placed = false;
+
+		// Inject the suffix inside the Wholesale Prices container, after the
+		// wholesale price's (usually empty) suffix slot, so it stays inline.
+		$anchor = strpos( $price_html, 'wholesale-price-suffix' );
+		if ( false !== $anchor ) {
+			$close = strpos( $price_html, '</small>', $anchor );
+			if ( false !== $close ) {
+				$price_html = substr_replace( $price_html, $suffix_html, $close + strlen( '</small>' ), 0 );
+				$placed     = true;
+			}
+		}
+
+		if ( ! $placed ) {
+			$price_html .= $suffix_html;
+		}
+	}
+
+	return $price_html . $line_html;
 }
 
 // ---------------------------------------------------------------------------

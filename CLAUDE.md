@@ -87,13 +87,19 @@ the roles field is a Select2 multi-select that is only shown when the audience i
 - **Tax status** — non-`taxable` products/variations are skipped (no VAT distinction).
 - **Variable products** — `ttrp_pwv_variable_range_html()` builds a min–max range; selected
   variations are handled by WC's native variation price update (no custom JS).
-- **Display model** — `ttrp_pwv_suffix_and_line()` keeps WooCommerce's main price, adds a
+- **Display model** — `ttrp_pwv_suffix_parts()` keeps WooCommerce's main price, adds a
   VAT **suffix** matching the tax-display mode (`ttrp_pwv_display_mode()` →
   `woocommerce_tax_display_shop` / `_cart`), and appends **one** line for the complementary
   VAT price. `show_incl` / `show_excl` each gate their VAT side (suffix when it matches the
-  display, line when it's the complement). Classic cart appends to the subtotal; the blocks
-  path (`pwv-blocks.js`) reformats `subtotalPriceFormat` the same way (`<price/>` + suffix +
-  complement).
+  display, line when it's the complement). It returns `['suffix', 'line']` so callers can
+  place them independently; `ttrp_pwv_suffix_and_line()` is the concatenated form used by the
+  cart path. Classic cart appends to the subtotal; the blocks path (`pwv-blocks.js`) reformats
+  `subtotalPriceFormat` the same way (`<price/>` + suffix + complement).
+- **Suffix placement (single/archive)** — `ttrp_pwv_merge_price_html()` merges the parts into
+  the price HTML: normally the suffix is appended inline after the main price, but when the
+  WooCommerce Wholesale Prices plugin's block-level `.wholesale_price_container` is present it
+  injects the suffix inside the container (after the `wholesale-price-suffix` slot) so it stays
+  next to the wholesale amount instead of wrapping below. The complementary line is always last.
 - **Roles list** — `ttrp_pwv_get_roles()` reads `wp_roles()->get_names()`, so any role
   (including Wholesale Customer) appears automatically.
 - **Wholesale Prices integration** — `ttrp_pwv_wholesale_prices()` / `ttrp_pwv_wholesale_range()`
