@@ -71,8 +71,8 @@ class TTRP_Update_Checker {
                 'requires'      => $response->requires ?? '',
                 'tested'        => $response->tested ?? '',
                 'requires_php'  => $response->requires_php ?? '',
-                'icons'         => [],
-                'banners'       => [],
+                'icons'         => (array) ( $response->icons ?? [] ),
+                'banners'       => (array) ( $response->banners ?? [] ),
             ];
         } else {
             // Let WP know the plugin is up to date (prevents false "no update info" notices)
@@ -83,6 +83,8 @@ class TTRP_Update_Checker {
                 'new_version' => $current,
                 'url'         => $response->homepage ?? '',
                 'package'     => '',
+                'icons'       => (array) ( $response->icons ?? [] ),
+                'banners'     => (array) ( $response->banners ?? [] ),
             ];
         }
 
@@ -118,6 +120,8 @@ class TTRP_Update_Checker {
                 'changelog'   => $response->changelog ?? 'See GitHub releases for changelog.',
             ],
             'download_link' => $response->download_url,
+            'icons'         => (array) ( $response->icons ?? [] ),
+            'banners'       => (array) ( $response->banners ?? [] ),
         ];
     }
 
