@@ -13,7 +13,7 @@ no autoloader, no Composer, no build step beyond `build.sh` (git archive).
 ```
 woo-tet-price-without-vat/
 ├── woo-tet-price-without-vat.php   # All plugin logic
-├── update-checker.php              # TTRP_Update_Checker (checks plugins.ttrp.gr)
+├── ttrp-common/                    # Shared ttrp.gr library: updates + "All Plugins" page (synced from the update server repo; never edit)
 ├── assets/
 │   ├── price-without-vat.css       # Front-end styling for the dual-price block
 │   ├── pwv-admin.js                # Settings page: Select2 roles + conditional row
