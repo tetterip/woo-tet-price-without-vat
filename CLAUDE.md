@@ -126,3 +126,15 @@ in-dashboard updates to return info.
 `php tests/run.php` — covers `ttrp_pwv_user_matches()` and the `ttrp_pwv_lines_markup()`
 output assembly. Run `php -l` and `phpcs` (shared ruleset + this plugin's prefix file)
 before releasing.
+
+## Proposed features / backlog (review 2026-09-26)
+
+Proposals from a suite-wide review, **not yet approved or scheduled** — discuss with the user before implementing. Remove or tick items here as they ship.
+
+1. **Run the manual checklist** in `DEVELOPMENT_PLAN.md` (all unchecked) on WordPress Playground, then retire that file: it still mentions `update-checker.php` (replaced by `ttrp-common`) and build-time open questions. Move anything still true into this file.
+2. **Net totals for B2B** — "Subtotal / Total excl. VAT" rows in cart, checkout and order emails, not only per line.
+3. **VAT amount line** (optional) — e.g. "ΦΠΑ 24%: €3.87" under the price.
+4. **Per-role tax display** — make excl. VAT the *main* price for chosen roles (wholesale), incl. VAT for everyone else, instead of only adding a second line.
+5. **Exclusions** — hide the dual price for selected products / categories.
+6. **Quantity-aware product page** — update both prices live when the quantity changes.
+- **Tests + CI (suite item S1)** — `tests/run.php` already exists (24 tests); add `.github/workflows/tests.yml` (PHP lint + `php tests/run.php` on 7.4 / 8.1 / 8.2) as in `woo-tet-acs-tracking`.
