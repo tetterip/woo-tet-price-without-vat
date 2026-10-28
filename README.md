@@ -66,4 +66,4 @@ A lightweight WooCommerce plugin that shows product prices **with and without VA
 
 ## License
 
-GPL-2.0+
+GPL-2.0-or-later — see [LICENSE](LICENSE).
