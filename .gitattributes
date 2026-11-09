@@ -1,0 +1,3 @@
+# Keep GitHub-only files out of the release zip (build.sh uses git archive)
+.github/        export-ignore
+.gitattributes  export-ignore
