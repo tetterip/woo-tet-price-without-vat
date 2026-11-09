@@ -13,9 +13,9 @@
  * Domain Path:       /languages
  * Requires Plugins:  woocommerce
  * Requires at least: 6.0
- * Tested up to:      6.8
+ * Tested up to:      7.1
  * Requires PHP:      7.4
- * WC tested up to:   10.7.0
+ * WC tested up to:   11.2
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -91,7 +91,7 @@ function ttrp_pwv_wc_version_notice() {
 		esc_html( TTRP_PWV_MIN_WC ),
 		esc_html( defined( 'WC_VERSION' ) ? WC_VERSION : '' )
 	);
-	printf( '<div class="notice notice-error"><p>%s</p></div>', $message ); // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped -- Message escaped above.
+	printf( '<div class="notice notice-error"><p>%s</p></div>', $message ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Message escaped above.
 }
 
 // ---------------------------------------------------------------------------
@@ -710,9 +710,9 @@ function ttrp_pwv_maybe_register_brand_menu(): void {
 				}
 			}
 			if ( $target ) {
-				$url = esc_url( admin_url( 'admin.php?page=' . $target ) );
-				echo '<meta http-equiv="refresh" content="0;url=' . $url . '">';
-				echo '<script>window.location.replace("' . $url . '");</script>';
+				$url = admin_url( 'admin.php?page=' . $target );
+				echo '<meta http-equiv="refresh" content="0;url=' . esc_url( $url ) . '">';
+				echo '<script>window.location.replace("' . esc_js( esc_url_raw( $url ) ) . '");</script>';
 			}
 		}
 	}
@@ -887,7 +887,7 @@ function ttrp_pwv_render_settings(): void {
  * Sanitize and persist the settings form.
  */
 function ttrp_pwv_save_settings(): void {
-	$raw       = isset( $_POST['ttrp_pwv'] ) ? wp_unslash( $_POST['ttrp_pwv'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitized -- Sanitized field-by-field below.
+	$raw       = isset( $_POST['ttrp_pwv'] ) ? wp_unslash( $_POST['ttrp_pwv'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Missing -- Nonce checked by the caller (check_admin_referer); sanitized field-by-field below.
 	$defaults  = ttrp_pwv_defaults();
 	$all_roles = array_keys( ttrp_pwv_get_roles() );
 

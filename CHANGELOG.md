@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Block cart and checkout: the incl./excl. VAT line prices were never shown, because they were registered on a Store API endpoint name WooCommerce does not know (`cart-items` instead of `cart-item`). WooCommerce also logged an exception for it on every request.
+- Escape the redirect URL at output in the shared **ttrp.gr Plugins** menu page (reported by the health check).
+
+### Changed
+- Tested up to WordPress 7.1 and WooCommerce 11.2.
+- Shared ttrp-common library 1.1.1: a one-time admin notice on what update checks send to plugins.ttrp.gr, a "Data and privacy" box on **ttrp.gr Plugins → All Plugins**, and a suggested paragraph for the WordPress privacy policy guide.
 
 ---
 
