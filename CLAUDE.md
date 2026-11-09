@@ -72,7 +72,7 @@ the roles field is a Select2 multi-select that is only shown when the audience i
 | `init` | `ttrp_pwv_init` | textdomain, admin menu, conditional front-end hooks |
 | `woocommerce_get_price_html` @99 | `ttrp_pwv_filter_price_html` | Single + archive; works for classic, block templates, and Elementor since they all call `get_price_html()`. Variations update natively (each variation's price HTML runs through it). |
 | `woocommerce_cart_item_subtotal` @99 | `ttrp_pwv_cart_item_subtotal` | Classic/Elementor cart + checkout; **replaces** the subtotal with the two VAT lines. `is_cart()`/`is_checkout()` gate the two toggles |
-| `woocommerce_blocks_loaded` | `ttrp_pwv_register_store_api_data` | Exposes per-line incl/excl on the Store API `cart-items` endpoint |
+| `woocommerce_blocks_loaded` | `ttrp_pwv_register_store_api_data` | Exposes per-line incl/excl on the Store API `cart-item` endpoint |
 | `wp_enqueue_scripts` | `ttrp_pwv_enqueue_front_assets` | Front-end CSS |
 | `wp_enqueue_scripts` | `ttrp_pwv_enqueue_block_assets` | `pwv-blocks.js` on block cart/checkout (depends on `wc-blocks-checkout`) |
 

@@ -3,7 +3,7 @@
  *
  * The block Cart/Checkout render line items via the Store API (React), so the
  * classic woocommerce_cart_item_subtotal filter never runs. The PHP side
- * exposes per-line incl/excl prices on the cart-items endpoint
+ * exposes per-line incl/excl prices on the cart-item endpoint
  * (extensions['ttrp-price-without-vat']). We reformat the line subtotal so the
  * customer sees exactly two prices: the one WooCommerce already displays
  * (labelled with/without VAT per the store's tax-display setting) plus the
