@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.6.1] - 2026-11-09
+
+### Fixed
+- Block cart and checkout: the incl./excl. VAT line prices were never shown, because they were registered on a Store API endpoint name WooCommerce does not know (`cart-items` instead of `cart-item`). WooCommerce also logged an exception for it on every request.
+
+---
+
 ## [1.6.0] - 2026-09-25
 
 ### Added

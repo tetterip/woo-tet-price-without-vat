@@ -3,7 +3,7 @@
  * Plugin Name:       Price With and Without VAT for WooCommerce
  * Plugin URI:        https://github.com/tetterip/woo-tet-price-without-vat
  * Description:       Shows product prices with and without VAT on the single product page, shop/category archives, and cart/checkout. Audience can be everyone, logged-in users, or selected roles (e.g. wholesale customers).
- * Version:           1.6.0
+ * Version:           1.6.1
  * Author:            Michalis Tetteris
  * Author URI:        https://ttrp.gr
  * License:           GPL-2.0-or-later
@@ -580,7 +580,7 @@ function ttrp_pwv_register_store_api_data() {
 	}
 	woocommerce_store_api_register_endpoint_data(
 		array(
-			'endpoint'        => 'cart-items',
+			'endpoint'        => 'cart-item',
 			'namespace'       => 'ttrp-price-without-vat',
 			'data_callback'   => 'ttrp_pwv_store_api_item_data',
 			'schema_callback' => 'ttrp_pwv_store_api_item_schema',
