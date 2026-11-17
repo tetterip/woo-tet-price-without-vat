@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.6.2] - 2026-11-17
+
+### Changed
+- Tested up to WooCommerce 11.3 (no changes needed: none of the APIs this plugin uses changed in WooCommerce 11.3).
+
+---
+
 ## [1.6.1] - 2026-11-09
 
 ### Fixed
